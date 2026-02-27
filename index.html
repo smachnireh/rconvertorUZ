@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>rConvertorUZ — Live</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --bg: #f4f7f4;
+                --surface: #ffffff;
+                --surface2: #f0f4f0;
+                --border: rgba(0, 0, 0, 0.07);
+                --border-focus: rgba(52, 168, 83, 0.35);
+                --green: #34a853;
+                --green-dark: #267a3e;
+                --green-dim: rgba(52, 168, 83, 0.1);
+                --green-pill: rgba(52, 168, 83, 0.11);
+                --text: #0f130f;
+                --text2: #3d4e3e;
+                --muted: #a3b0a4;
+                --muted2: #6e7f6f;
+                --tab-bg: #eaedea;
+
+                --shadow-card:
+                    0 1px 2px rgba(0, 0, 0, 0.04),
+                    0 4px 12px rgba(0, 0, 0, 0.05),
+                    0 16px 40px rgba(0, 0, 0, 0.05);
+                --shadow-focus:
+                    0 1px 2px rgba(0, 0, 0, 0.04),
+                    0 6px 20px rgba(52, 168, 83, 0.1),
+                    0 20px 50px rgba(52, 168, 83, 0.08);
+                --shadow-btn:
+                    0 1px 3px rgba(0, 0, 0, 0.08),
+                    0 4px 14px rgba(0, 0, 0, 0.08);
+                --shadow-btn-hover:
+                    0 2px 6px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.1);
+            }
+
+            body {
+                font-family: "Geist", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                min-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem 1.5rem;
+                padding-bottom: env(safe-area-inset-bottom, 2rem);
+                gap: 1.4rem;
+            }
+
+            body::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                background-image:
+                    linear-gradient(
+                        rgba(52, 168, 83, 0.05) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(52, 168, 83, 0.05) 1px,
+                        transparent 1px
+                    );
+                background-size: 44px 44px;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            /* ─── App shell ─── */
+            .app {
+                position: relative;
+                z-index: 1;
+                width: 100%;
+                max-width: 800px;
+                display: flex;
+                flex-direction: column;
+                gap: 1.1rem;
+            }
+
+            /* ─── Header ─── */
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .logo {
+                font-size: 1.05rem;
+                font-weight: 600;
+                letter-spacing: -0.03em;
+                color: var(--text);
+            }
+            .logo em {
+                color: var(--green);
+                font-style: normal;
+            }
+
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .date-status {
+                font-size: 10px;
+                color: var(--muted2);
+                font-style: italic;
+            }
+
+            .live-badge {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 4px 11px;
+                border-radius: 999px;
+                background: var(--green-pill);
+                border: 1px solid rgba(52, 168, 83, 0.18);
+            }
+            .live-dot {
+                width: 6px;
+                height: 6px;
+                background: var(--green);
+                border-radius: 50%;
+                animation: blink 2.4s ease-in-out infinite;
+            }
+            .live-badge span {
+                font-size: 8px;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                color: var(--green-dark);
+                text-transform: uppercase;
+            }
+            @keyframes blink {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.25;
+                }
+            }
+
+            /* ─── Two-panel grid ─── */
+            .panels {
+                display: grid;
+                grid-template-columns: 1fr 56px 1fr;
+                align-items: center;
+            }
+
+            /* ─── Panel card ─── */
+            .panel {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 24px;
+                padding: 1.5rem 1.6rem;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                min-height: 248px;
+                box-shadow: var(--shadow-card);
+                transition:
+                    border-color 0.3s,
+                    box-shadow 0.35s,
+                    transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+                will-change: transform;
+            }
+            .panel.focus-panel {
+                border-color: var(--border-focus);
+                box-shadow: var(--shadow-focus);
+                transform: translateY(-3px);
+            }
+            .panel-label {
+                font-size: 9px;
+                font-weight: 700;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: var(--muted2);
+            }
+
+            /* ─── Currency tabs ─── */
+            .tabs {
+                display: flex;
+                gap: 3px;
+                background: var(--tab-bg);
+                border-radius: 12px;
+                padding: 3px;
+            }
+            .tab {
+                flex: 1;
+                padding: 7px 2px;
+                border-radius: 9px;
+                border: none;
+                background: transparent;
+                color: var(--muted2);
+                font-family: "Geist Mono", monospace;
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 0.04em;
+                cursor: pointer;
+                transition:
+                    background 0.18s,
+                    color 0.18s,
+                    box-shadow 0.18s,
+                    transform 0.1s;
+                -webkit-tap-highlight-color: transparent;
+                text-align: center;
+            }
+            .tab:hover:not(.active) {
+                background: rgba(255, 255, 255, 0.7);
+                color: var(--text2);
+            }
+            .tab.active {
+                background: var(--green);
+                color: #fff;
+                box-shadow: 0 2px 8px rgba(52, 168, 83, 0.3);
+            }
+            .tab:active {
+                transform: scale(0.94);
+            }
+
+            /* ─── Amount input ─── */
+            .amount-area {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 4px;
+            }
+            .input-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .cur-sym {
+                font-family: "Geist Mono", monospace;
+                font-size: 1.15rem;
+                font-weight: 400;
+                color: var(--muted);
+                flex-shrink: 0;
+                user-select: none;
+                transition: color 0.25s;
+            }
+            .panel.focus-panel .cur-sym {
+                color: var(--green);
+            }
+
+            .amount-input {
+                flex: 1;
+                min-width: 0;
+                background: transparent;
+                border: none;
+                outline: none;
+                font-family: "Geist Mono", monospace;
+                font-size: clamp(1.75rem, 4vw, 2.6rem);
+                font-weight: 500;
+                letter-spacing: -0.03em;
+                color: var(--text);
+                caret-color: var(--green);
+            }
+            .amount-input::placeholder {
+                color: #d4dbd4;
+            }
+            .amount-input[readonly] {
+                color: var(--muted2);
+                cursor: default;
+            }
+
+            /* ─── Copy button ─── */
+            .copy-btn {
+                flex-shrink: 0;
+                width: 30px;
+                height: 30px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+                background: var(--surface2);
+                color: var(--muted2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.18s;
+                opacity: 0.55;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .copy-btn:hover {
+                opacity: 1;
+                background: var(--green-dim);
+                color: var(--green);
+                border-color: rgba(52, 168, 83, 0.3);
+            }
+            .copy-btn:active {
+                transform: scale(0.9);
+            }
+            .copy-btn.copied {
+                background: var(--green);
+                color: #fff;
+                border-color: var(--green);
+                opacity: 1;
+            }
+            @media (hover: none) {
+                .copy-btn {
+                    opacity: 1;
+                }
+            }
+
+            /* ─── Cross rate ─── */
+            .cross-rate {
+                font-family: "Geist Mono", monospace;
+                font-size: 10px;
+                color: var(--muted);
+                min-height: 14px;
+                letter-spacing: 0.02em;
+                transition: color 0.25s;
+            }
+            .panel.focus-panel .cross-rate {
+                color: var(--muted2);
+            }
+
+            /* ─── Reverse button ─── */
+            .reverse-wrap {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .reverse-btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                background: #fff;
+                color: var(--muted2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: var(--shadow-btn);
+                transition:
+                    box-shadow 0.22s,
+                    color 0.18s,
+                    transform 0.12s;
+                -webkit-tap-highlight-color: transparent;
+                flex-shrink: 0;
+                z-index: 2;
+            }
+            .reverse-btn:hover {
+                color: var(--green);
+                box-shadow: var(--shadow-btn-hover);
+            }
+            .reverse-btn:active {
+                transform: scale(0.9);
+            }
+            .reverse-btn svg {
+                width: 18px;
+                height: 18px;
+                transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .reverse-btn.spin svg {
+                transform: rotate(180deg);
+            }
+
+            /* ─── Footer ─── */
+            .footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .footer span {
+                font-size: 9px;
+                letter-spacing: 0.07em;
+                text-transform: uppercase;
+                color: var(--muted);
+                opacity: 0.6;
+            }
+
+            /* ─── Toast ─── */
+            #toast {
+                position: fixed;
+                bottom: 28px;
+                left: 50%;
+                transform: translateX(-50%) translateY(16px);
+                background: #141c14;
+                color: #d6f0da;
+                font-size: 0.8rem;
+                padding: 9px 18px;
+                border-radius: 11px;
+                border: 1px solid rgba(52, 168, 83, 0.2);
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+                pointer-events: none;
+                opacity: 0;
+                transition:
+                    opacity 0.22s,
+                    transform 0.22s;
+                z-index: 100;
+                white-space: nowrap;
+            }
+            #toast.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            #toast.error {
+                background: #1c1010;
+                border-color: rgba(239, 68, 68, 0.25);
+                color: #fca5a5;
+            }
+            #toast.success {
+                background: #0f1f12;
+                border-color: rgba(52, 168, 83, 0.28);
+                color: #a7f0b8;
+            }
+
+            /* ═══════════════════════
+           DESKTOP ≥ 768px
+        ═══════════════════════ */
+            @media (min-width: 768px) {
+                body {
+                    padding: 2.5rem;
+                }
+                .app {
+                    max-width: 860px;
+                    gap: 1.4rem;
+                }
+                .logo {
+                    font-size: 1.15rem;
+                }
+                .date-status {
+                    font-size: 11px;
+                }
+                .panel {
+                    border-radius: 28px;
+                    padding: 2rem 2.2rem;
+                    min-height: 275px;
+                    gap: 18px;
+                }
+                .panel-label {
+                    font-size: 10px;
+                }
+                .tabs {
+                    border-radius: 13px;
+                    padding: 4px;
+                }
+                .tab {
+                    padding: 7px 4px;
+                    font-size: 11px;
+                    border-radius: 9px;
+                }
+                .cur-sym {
+                    font-size: 1.3rem;
+                }
+                .amount-input {
+                    font-size: clamp(2rem, 3.5vw, 3.2rem);
+                }
+                .copy-btn {
+                    width: 32px;
+                    height: 32px;
+                }
+                .cross-rate {
+                    font-size: 11px;
+                }
+                .reverse-btn {
+                    width: 48px;
+                    height: 48px;
+                }
+                .reverse-btn svg {
+                    width: 19px;
+                    height: 19px;
+                }
+                .footer span {
+                    font-size: 10px;
+                }
+            }
+
+            /* ═══════════════════════
+           MOBILE < 768px
+        ═══════════════════════ */
+            @media (max-width: 767px) {
+                body {
+                    padding: 1rem;
+                    padding-bottom: env(safe-area-inset-bottom, 1rem);
+                    gap: 1rem;
+                }
+                .app {
+                    gap: 0.9rem;
+                }
+                .logo {
+                    font-size: 0.95rem;
+                }
+                .date-status {
+                    display: none;
+                }
+                .panels {
+                    grid-template-columns: 1fr;
+                }
+                .reverse-wrap {
+                    padding: 2px 0;
+                }
+                .reverse-wrap .reverse-btn {
+                    transform: rotate(90deg);
+                    width: 38px;
+                    height: 38px;
+                }
+                .reverse-btn.spin svg {
+                    transform: rotate(180deg);
+                }
+                .panel {
+                    border-radius: 20px;
+                    padding: 1.1rem 1.2rem;
+                    min-height: auto;
+                    gap: 11px;
+                }
+                .panel-label {
+                    font-size: 8px;
+                }
+                .tabs {
+                    border-radius: 10px;
+                    padding: 3px;
+                }
+                .tab {
+                    padding: 6px 2px;
+                    font-size: 9px;
+                    border-radius: 8px;
+                }
+                .cur-sym {
+                    font-size: 1rem;
+                }
+                .amount-input {
+                    font-size: 1.6rem;
+                }
+                .copy-btn {
+                    width: 28px;
+                    height: 28px;
+                    opacity: 1;
+                }
+                .cross-rate {
+                    font-size: 9.5px;
+                }
+                .footer span {
+                    font-size: 8px;
+                }
+            }
+
+            @keyframes fadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(4px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .fade-up {
+                animation: fadeUp 0.18s ease forwards;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app">
+            <div class="header">
+                <div class="logo">rConvertor<em>UZ</em></div>
+                <div class="header-right">
+                    <span class="date-status" id="date-status"
+                        >Обновление…</span
+                    >
+                    <div class="live-badge">
+                        <div class="live-dot"></div>
+                        <span>Live</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panels">
+                <!-- FROM -->
+                <div class="panel focus-panel" id="panel-from">
+                    <div class="panel-label">У меня есть</div>
+                    <div class="tabs" id="tabs-from">
+                        <button class="tab active" data-cur="UZS">UZS</button>
+                        <button class="tab" data-cur="USD">USD</button>
+                        <button class="tab" data-cur="CNY">CNY</button>
+                        <button class="tab" data-cur="JPY">JPY</button>
+                    </div>
+                    <div class="amount-area">
+                        <div class="input-row">
+                            <span class="cur-sym" id="sym-from">сум</span>
+                            <input
+                                class="amount-input"
+                                id="input-from"
+                                type="text"
+                                inputmode="decimal"
+                                placeholder="0"
+                                autocomplete="off"
+                            />
+                            <button
+                                class="copy-btn"
+                                id="copy-from"
+                                aria-label="Копировать"
+                            >
+                                <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <rect
+                                        x="9"
+                                        y="9"
+                                        width="13"
+                                        height="13"
+                                        rx="2"
+                                    />
+                                    <path
+                                        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="cross-rate" id="cross-from">—</div>
+                </div>
+
+                <!-- REVERSE -->
+                <div class="reverse-wrap">
+                    <button
+                        class="reverse-btn"
+                        id="reverse-btn"
+                        aria-label="Поменять местами"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M7 16V4m0 0L3 8m4-4 4 4" />
+                            <path d="M17 8v12m0 0 4-4m-4 4-4-4" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- TO -->
+                <div class="panel" id="panel-to">
+                    <div class="panel-label">Я получу</div>
+                    <div class="tabs" id="tabs-to">
+                        <button class="tab" data-cur="UZS">UZS</button>
+                        <button class="tab active" data-cur="USD">USD</button>
+                        <button class="tab" data-cur="CNY">CNY</button>
+                        <button class="tab" data-cur="JPY">JPY</button>
+                    </div>
+                    <div class="amount-area">
+                        <div class="input-row">
+                            <span class="cur-sym" id="sym-to">$</span>
+                            <input
+                                class="amount-input"
+                                id="input-to"
+                                type="text"
+                                placeholder="0.00"
+                                autocomplete="off"
+                                readonly
+                            />
+                            <button
+                                class="copy-btn"
+                                id="copy-to"
+                                aria-label="Копировать"
+                            >
+                                <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <rect
+                                        x="9"
+                                        y="9"
+                                        width="13"
+                                        height="13"
+                                        rx="2"
+                                    />
+                                    <path
+                                        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="cross-rate" id="cross-to">—</div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <span>ExchangeRate-API</span>
+                <span id="last-update">Синхронизация…</span>
+            </div>
+        </div>
+
+        <div id="toast"></div>
+
+        <script>
+            // ── Currency config ──────────────────────────────
+            const CURRENCIES = {
+                UZS: { symbol: "сум", decimals: 0 },
+                USD: { symbol: "$", decimals: 2 },
+                CNY: { symbol: "¥", decimals: 2 },
+                JPY: { symbol: "¥", decimals: 0 },
+            };
+
+            let fromCur = localStorage.getItem("fromCur") || "UZS";
+            let toCur = localStorage.getItem("toCur") || "USD";
+            let rates = { UZS: 1, USD: 0, CNY: 0, JPY: 0 };
+
+            // ── Helpers ──────────────────────────────────────
+            function haptic() {
+                if (navigator.vibrate) navigator.vibrate(6);
+            }
+
+            function fmt(value, cur) {
+                if (value === null || value === undefined || isNaN(value))
+                    return "";
+                const d = CURRENCIES[cur].decimals;
+                return value.toLocaleString("ru-RU", {
+                    minimumFractionDigits: d,
+                    maximumFractionDigits: d,
+                });
+            }
+
+            function parse(str) {
+                if (!str) return NaN;
+                return parseFloat(str.replace(/\s/g, "").replace(",", "."));
+            }
+
+            // ── Toast ────────────────────────────────────────
+            let _toastTimer;
+            function showToast(msg, type = "") {
+                const el = document.getElementById("toast");
+                el.textContent = msg;
+                el.className = "show" + (type ? " " + type : "");
+                clearTimeout(_toastTimer);
+                _toastTimer = setTimeout(() => {
+                    el.className = "";
+                }, 2600);
+            }
+
+            // ── Cross rates ──────────────────────────────────
+            function updateCrossRates() {
+                const r1 = rates[fromCur],
+                    r2 = rates[toCur];
+                if (!r1 || !r2) return;
+                document.getElementById("cross-from").textContent =
+                    `1 ${fromCur} = ${fmt(r1 / r2, toCur)} ${toCur}`;
+                document.getElementById("cross-to").textContent =
+                    `1 ${toCur} = ${fmt(r2 / r1, fromCur)} ${fromCur}`;
+            }
+
+            // ── Convert & render ─────────────────────────────
+            function convert() {
+                const rawStr = document.getElementById("input-from").value;
+                const val = parse(rawStr);
+                const outEl = document.getElementById("input-to");
+
+                if (isNaN(val) || !rawStr) {
+                    outEl.value = "";
+                    return;
+                }
+                const result = (val * rates[fromCur]) / rates[toCur];
+
+                outEl.classList.remove("fade-up");
+                void outEl.offsetWidth;
+                outEl.value = fmt(result, toCur);
+                outEl.classList.add("fade-up");
+            }
+
+            function updateSymbols() {
+                document.getElementById("sym-from").textContent =
+                    CURRENCIES[fromCur].symbol;
+                document.getElementById("sym-to").textContent =
+                    CURRENCIES[toCur].symbol;
+            }
+
+            // ── Tabs ─────────────────────────────────────────
+            function renderTabs() {
+                ["from", "to"].forEach((side) => {
+                    const cur = side === "from" ? fromCur : toCur;
+                    document
+                        .querySelectorAll(`#tabs-${side} .tab`)
+                        .forEach((btn) =>
+                            btn.classList.toggle(
+                                "active",
+                                btn.dataset.cur === cur,
+                            ),
+                        );
+                });
+            }
+
+            function setTab(side, cur) {
+                haptic();
+                const other = side === "from" ? toCur : fromCur;
+                if (cur === other) {
+                    doSwap();
+                    return;
+                } // avoid duplicate — swap instead
+
+                if (side === "from") fromCur = cur;
+                else toCur = cur;
+
+                localStorage.setItem("fromCur", fromCur);
+                localStorage.setItem("toCur", toCur);
+
+                renderTabs();
+                updateSymbols();
+                updateCrossRates();
+                convert();
+            }
+
+            document
+                .querySelectorAll("#tabs-from .tab")
+                .forEach((btn) =>
+                    btn.addEventListener("click", () =>
+                        setTab("from", btn.dataset.cur),
+                    ),
+                );
+            document
+                .querySelectorAll("#tabs-to .tab")
+                .forEach((btn) =>
+                    btn.addEventListener("click", () =>
+                        setTab("to", btn.dataset.cur),
+                    ),
+                );
+
+            // ── Input ────────────────────────────────────────
+            const inputFrom = document.getElementById("input-from");
+
+            inputFrom.addEventListener("focus", () => {
+                document
+                    .getElementById("panel-from")
+                    .classList.add("focus-panel");
+                document
+                    .getElementById("panel-to")
+                    .classList.remove("focus-panel");
+            });
+
+            inputFrom.addEventListener("input", convert);
+
+            inputFrom.addEventListener("blur", () => {
+                const v = parse(inputFrom.value);
+                if (!isNaN(v) && inputFrom.value.trim() !== "") {
+                    inputFrom.value = fmt(v, fromCur);
+                }
+            });
+
+            inputFrom.addEventListener("mouseup", (e) => {
+                e.preventDefault();
+                inputFrom.select();
+            });
+
+            // ── Swap ─────────────────────────────────────────
+            function doSwap() {
+                haptic();
+                [fromCur, toCur] = [toCur, fromCur];
+
+                // carry computed result back to input
+                const outVal = document.getElementById("input-to").value;
+                inputFrom.value = outVal;
+
+                localStorage.setItem("fromCur", fromCur);
+                localStorage.setItem("toCur", toCur);
+
+                renderTabs();
+                updateSymbols();
+                updateCrossRates();
+                convert();
+
+                const btn = document.getElementById("reverse-btn");
+                btn.classList.add("spin");
+                setTimeout(() => btn.classList.remove("spin"), 420);
+            }
+
+            document
+                .getElementById("reverse-btn")
+                .addEventListener("click", doSwap);
+
+            // ── Copy ─────────────────────────────────────────
+            function makeCopy(btnId, inputId) {
+                const btn = document.getElementById(btnId);
+                const ICON = btn.innerHTML;
+                const CHECK = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/></svg>`;
+
+                btn.addEventListener("click", () => {
+                    const input = document.getElementById(inputId);
+                    if (!input.value) return;
+
+                    haptic();
+                    // Используем современный Clipboard API
+                    navigator.clipboard
+                        .writeText(input.value)
+                        .then(() => {
+                            btn.innerHTML = CHECK;
+                            btn.classList.add("copied");
+                            showToast("Скопировано", "success");
+
+                            setTimeout(() => {
+                                btn.innerHTML = ICON;
+                                btn.classList.remove("copied");
+                            }, 2000);
+                        })
+                        .catch(() => {
+                            showToast("Ошибка копирования", "error");
+                        });
+                });
+            }
+
+            // Инициализация кнопок
+            makeCopy("copy-from", "input-from");
+            makeCopy("copy-to", "input-to");
+
+            // ── API ──────────────────────────────────────────
+            async function fetchRates() {
+                try {
+                    const res = await fetch(
+                        "https://open.er-api.com/v6/latest/UZS",
+                    );
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const data = await res.json();
+
+                    rates.USD = 1 / data.rates.USD;
+                    rates.CNY = 1 / data.rates.CNY;
+                    rates.JPY = 1 / data.rates.JPY;
+
+                    const now = new Date();
+                    document.getElementById("date-status").textContent =
+                        `Курсы на ${now.toLocaleDateString("ru-RU")}`;
+                    document.getElementById("last-update").textContent =
+                        `Обновлено ${now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+
+                    updateCrossRates();
+                    convert();
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById("date-status").textContent =
+                        "Нет данных";
+                    showToast("⚠️ Не удалось загрузить курсы", "error");
+                }
+            }
+
+            // ── Init ─────────────────────────────────────────
+            renderTabs();
+            updateSymbols();
+            fetchRates();
+            setInterval(fetchRates, 5 * 60 * 1000);
+        </script>
+    </body>
+</html>
